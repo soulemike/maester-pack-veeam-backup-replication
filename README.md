@@ -11,3 +11,7 @@ Invoke-Maester -Pack VBR
 ```
 
 This is a [Maester Pack](https://maester.dev/docs/packs). Its page is [packs.maester.cloud/p/vbr](https://packs.maester.cloud/p/vbr).
+
+## Implementation status
+
+This repository is a scaffold. Implementation is awaiting approval of the [proposed implementation plan](docs/implementation-plan.md).
