@@ -1,0 +1,24 @@
+{
+  "$schema": "https://maester.dev/schemas/maester-pack-1.0.json",
+  "Id": "soulemike.veeam-backup-replication",
+  "Guid": "4b7eb326-ab02-48cd-a00e-d7eeb1e3ff20",
+  "Name": "Veeam Backup & Replication Checks",
+  "Description": "Reviews the deployment and configuration state of Veeam Backup & Replication",
+  "Version": "0.1.0",
+  "Publisher": "soulemike",
+  "License": "MIT",
+  "Homepage": "https://github.com/soulemike/maester-pack-veeam-backup-replication",
+  "Support": "https://github.com/soulemike/maester-pack-veeam-backup-replication/issues",
+  "RequiresMaester": ">=3.0",
+  "Code": "VBR",
+  "Suites": [
+    "tests"
+  ],
+  "Uses": {
+    "Services": [],
+    "GraphScopes": [],
+    "Network": []
+  },
+  "Pricing": "Free",
+  "Guide": "maester-pack.guide.json"
+}
