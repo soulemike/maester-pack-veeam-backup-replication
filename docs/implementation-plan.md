@@ -4,11 +4,15 @@
 
 ## 1. Purpose and scope
 
-Build a Maester pack that assesses Veeam Backup & Replication (VBR) implementation state, configuration state, operational posture, and security posture through its REST API. The target is VBR 13.1, REST API 1.3-rev2, with VMware and Hyper-V assessment coverage and the minimal representative-job adapter needed for deployment E2E. The pack must report evidence and uncertainty honestly; it must not imply that configuration checks prove successful recovery, immutable copies, or overall compliance.
+Build a Maester pack that assesses Veeam Backup & Replication (VBR) implementation state, configuration state, operational posture, and security posture through its REST API. The target is workload-agnostic assessment of VBR-managed jobs on VBR 13.1, REST API 1.3-rev2, with Agent, VMware, and Hyper-V adapters for the common protection capabilities. The pack must report evidence and uncertainty honestly; it must not imply that configuration checks prove successful recovery, immutable copies, or overall compliance.
 
 The initial release is to include the pack foundation, shared API collection/evaluation path, core assessment controls, documentation, and a private Azure deployment end-to-end (E2E) qualification using a representative VBR job (a small VBR-managed Veeam Agent backup job is preferred). It is not a requirement to stand up a live VMware or Hyper-V environment for this E2E gate. VMware and Hyper-V schemas and branches must still have offline fixture/contract coverage. The live scenario qualifies only if it exercises the shared production collection and evaluation path and the minimum core-check set defined at Gate B; a backup job for which every relevant check is skipped is not representative coverage.
 
 V0.1 includes only the minimal representative job/session/restore-point adapter needed for deployment E2E and shared controls. It does not imply full Veeam Agent product coverage, standalone-agent support, or a separate Agent policy assessment suite.
+
+Hypervisor support is not a prerequisite of the actual Veeam posture checks. Agent, VMware, and Hyper-V jobs belong to the same capability-based assessment scope: apply the same controls, policy defaults, runtime overrides, and verdict semantics wherever the VBR API supplies equivalent protection evidence. A hypervisor is workload metadata, not a gate for server-wide checks or common job checks. Document genuinely different capabilities or evidence limitations rather than building separate hypervisor-specific baselines or requiring a vCenter/Hyper-V connection for generic checks.
+
+VMware and Hyper-V adapters, like the Agent adapter, are limited in v0.1 to mapping the common protection model. Hypervisor-only product features are outside v0.1 unless separately approved and are recorded as scope limitations; their presence does not require broader checks than the Agent scenario.
 
 This plan does not authorize changes to business logic, account configuration, Azure resources, or any other implementation. It does not authorize a spend, elevated access, production changes, or destructive testing. Those require separate approval and preflight. The current repository is a scaffold: preserve its package identity and do not claim that planned functionality is already present.
 
@@ -30,6 +34,8 @@ This plan does not authorize changes to business logic, account configuration, A
 6. Before selecting the Agent job topology, implementation must verify the target API schema, endpoint fields, and edition availability. Any VMware/Hyper-V-only feature not represented by the Agent scenario must be separately recorded as contract-covered or unavailable in that live profile—not falsely reported as live-covered.
 
 A VBR-managed Agent job on a small Azure VM is preferred, not mandatory. Any other approved representative, core-capable VBR job hosted entirely in Azure may be selected if Gate B evidence shows it exercises the shared core path. The selected job must not introduce a requirement for a VMware, Hyper-V, AVS, or nested-hypervisor lab.
+
+The subsequent clarification makes generic, capability-based API processing a normative design requirement and selects SSH as the preferred guest-management protocol after Azure resources are provisioned. Neither change authorizes implementation before Gate A.
 
 ## 4. Evidence baseline and verification caveats
 
@@ -149,6 +155,25 @@ Do not cache results unless a pack-owned assessment run/scope is active. Provide
 - Report collection interval and source timestamps; the API is not an atomic snapshot.
 - Acceptance must include real native-engine contract coverage for cache hits through the wrapper, successive successful runs, direct uncached invocation, and error/cancellation disposal. Static checks must ensure no implicit cache is active without a scope.
 
+### 7.2 Generic processing and capability normalization
+
+Separate three layers: a workload-agnostic REST transport, versioned schema/collection adapters, and shared capability-based evaluation functions. The REST transport owns authentication, version headers, validated requests, pagination, retry, cancellation, and caching for every allowlisted collection; it must not require or branch on a VMware, Hyper-V, or Agent connection. Generic processing does not mean arbitrary URLs, unrestricted HTTP methods, dynamic code execution, or silently trusting unverified required fields or decision-relevant schema semantics. Harmless additive response fields may be ignored and reported; unknown decision-relevant types, fields, or enum values require explicit validation or uncertainty/error handling.
+
+Adapters may select documented job-family endpoints and map different response shapes into a common protection model. Keep workload-specific property paths and enum mappings inside those adapters, not duplicated across Maester tests. The common model includes stable job/object/repository/session identifiers, workload metadata, scheduling, typed retention, encryption, integrity-check settings, applicable guest/application processing, session outcomes, and restore-point evidence. Server-wide settings, identities, configuration backup, repositories, and analyzer results remain independent of protected-workload type.
+
+For each relevant capability, retain its Supported, Unsupported, or Unknown state separately from its configured value, together with source operation/schema version, access scope, collection time, and evidence completeness. Missing or unreadable data is not a disabled setting or proof that a capability is unsupported. Only documented non-applicability that policy permits may skip a control; an unknown capability, collection failure, or missing policy-required protection must have an explicit uncertainty/error/coverage verdict rather than silently disappearing.
+
+| Protection capability | Shared evaluation rule |
+| --- | --- |
+| Schedule and enablement | Evaluate the configured schedule against the same approved-job policy, not hypervisor presence. |
+| Retention | Preserve days versus restore-point units; apply the same typed thresholds to equivalent evidence. |
+| Encryption | Evaluate supported job encryption identically across job families; do not infer historical backup encryption from current settings. |
+| Integrity and application processing | Use the same policy where supported and applicable; document family-specific prerequisites or unavailable evidence. |
+| Sessions and restore points | Normalize identifiers, timestamps, and outcomes while preserving retry and backup/object correlations. |
+| Repository and server posture | Evaluate common resource/settings evidence without requiring any specific protected hypervisor. |
+
+Equivalent normalized evidence and policy must produce equivalent native Maester verdicts for Agent, VMware, and Hyper-V fixtures. The Azure representative job validates this shared path, not a separate lab-only evaluator. Adding an adapter must not change the semantics of existing common checks or imply that every job family exposes identical capabilities. Do not claim live validation of an unexercised schema adapter merely because the common evaluator is live-tested.
+
 ## 8. Result semantics and evidence
 
 Translate native outcomes explicitly: boolean true only for Passed, false for Failed, Investigate detail plus null, sanitized exception for Error, Skip only for documented non-applicability, and NotRun only as reported by the engine. A result that cannot be evaluated because expected inventory or permissions are missing must not pass. Keep top-level coverage visible so an object-ID mismatch or a `NoInstances` state cannot hide missing expected objects.
@@ -163,6 +188,7 @@ Every pull request should have free, offline checks only. No Azure/VBR live depe
 
 - Run `Test-MtPack` and validate manifest, native test/Markdown pairing, IDs, and documentation structure against the pinned Maester engine.
 - Pester unit/contract tests use synthetic fixtures for VMware, Hyper-V, and the representative Agent schema; verify typed normalization, missing/unknown fields, and coverage distinctions. These fixtures are not live evidence.
+- Include cross-family equivalence tests: equivalent normalized capabilities and policy produce the same verdicts, thresholds, and evidence requirements for Agent, VMware, and Hyper-V. Test documented Unsupported separately from Unknown and permission failure; prove that common/server-wide checks do not depend on hypervisor presence.
 - Test parameter bounds/precedence, configuration overlays, policy thresholds, unit handling, inventory completeness, and explicit six-outcome mapping.
 - Test mutation boundary: assessment requests must remain read-only; any lab mutator is isolated and resource-scoped.
 - Use a local mock HTTP server/virtual clock for TLS/certificate failures, origins/redirects, 401/403/429, `Retry-After`, paging, token refresh, secret redaction, timeouts/cancellation, unknown enums, stale sessions/jobs, restore-point freshness, capacity units, RBAC visibility, cache isolation, retry bounds, and overrides.
@@ -193,11 +219,20 @@ Use private connectivity and no broad public management access. Do not require v
 
 Default to pure Azure private orchestration, not public GitHub Actions. A self-hosted runner for a public repository must never be attached; public CI must have no MI/secret access and must not receive live outputs, checks, callbacks, or status—even if results are passing. Any future public status gate requires separate written consent.
 
-Keep IaC, scripts, and runbooks in this project and deploy a pinned source SHA. An approved existing Azure controller using MI may manually start a run, or a small Azure Automation/Function MI controller may be evaluated. An independent expiry janitor must survive runner failure and be in place before VM creation; a new always-on VM is not presumed necessary. Run the ephemeral VM through Azure Run Command or a private agent only after an explicit transport/permission decision. GitHub registration credentials and OIDC are not default requirements.
+Keep IaC, scripts, and runbooks in this project and deploy a pinned source SHA. An approved existing Azure controller using MI may manually start a run, or a small Azure Automation/Function MI controller may be evaluated. An independent expiry janitor must survive runner failure and be in place before VM creation; a new always-on VM is not presumed necessary. After provisioning and secure bootstrap, SSH is the preferred protocol for guest configuration, script execution, and diagnostics. Azure Run Command or an approved provisioning mechanism may establish SSH initially; subsequent use is a documented bootstrap/recovery exception, not the default steady-state management path. GitHub registration credentials and OIDC are not default requirements.
 
 Separate the Azure controller identity, resource-creation/cleanup identity, Key Vault identity, and VBR assessment identity. MI is not VBR, vCenter, or GitHub authentication. Scope Key Vault access to approved secret retrieval; avoid Owner, broad role-assignment authority, and implicit privilege escalation. Bootstrap role assignments are a separate human-admin action and approval. Do not assume resource-group scope permissions permit deleting the whole group; prefer exact run-owned resource IDs. Do not create a separate private repository without explicit approval.
 
-Define private resource-group/output readers, Run Command log redaction/retention, approved storage identities, and network paths. Avoid public VBR 9419, RDP/SSH, or broad inbound rules. Restrict network source IPs where feasible. Run ownership and expiry tags and resource IDs must be recorded without secrets.
+Define private resource-group/output readers, bootstrap/recovery Run Command log redaction/retention, approved storage identities, and network paths. Avoid public VBR 9419, RDP/SSH, or broad inbound rules. SSH access must be restricted to approved private controller sources; document scoped access rules for the separate VBR and Azure API paths. Run ownership and expiry tags and resource IDs must be recorded without secrets.
+
+The SSH management contract is:
+
+- Use private TCP 22 access restricted to approved controller sources; do not open public SSH, RDP, or WinRM as a convenience. Document and validate controller-to-guest connectivity before choosing the private orchestration runtime.
+- For Windows VBR and Windows Agent guests, configure a supported OpenSSH Server and validate the chosen PowerShell-over-SSH or command-execution path. SSH availability is a provisioning/management requirement, not a requirement imposed on production VBR environments by REST-only checks.
+- Prefer dedicated, scoped, key-based SSH identities and short-lived per-run access. Verify/pin host keys using an independently trusted bootstrap channel; never disable host-key checking or silently accept unknown keys. Protect private keys in approved ephemeral storage or Key Vault, avoid logs/artifacts, and revoke/remove run-owned access during cleanup.
+- Azure managed identity authorizes Azure provisioning, secret retrieval, and resource cleanup; it is not automatically an SSH login. Keep SSH credentials/host trust separate from VBR API credentials and SSH command execution separate from the read-only assessment client's endpoint allowlist.
+- VBR assessment continues over HTTPS REST on its configured private endpoint, normally TCP 9419. Azure resource operations continue over Azure management APIs. SSH does not replace either API or authorize additional production operations.
+- Bound SSH connection/command duration, output, and cancellation; close task-owned sessions on every exit and redact sensitive diagnostics. Independent Azure-side cleanup must remain possible when SSH or the guest is unavailable.
 
 ### 10.3 Assets, preflight, and cleanup
 
@@ -222,8 +257,10 @@ After the approval gate, plan to document:
 - Machine-generated permission catalog and human-readable matrix, including profile/version/evidence/verification status.
 - Default baseline and every threshold/unit/override, exception handling and what each test does not prove.
 - API client behavior, authentication lifecycle, cache scope/TTL/bypass, privacy/redaction and direct native invocation behavior.
+- Generic protection-model/adapters, capability availability and evidence mapping, cross-family equivalence, and a clear distinction between workload metadata and actual check requirements.
 - Test catalog with native outcomes, applicability, expected inventory, requirements, evidence limitations and coverage level.
 - Testing/contributing guidance for offline, private live integration and E2E; release notes and versioned compatibility/coverage claims.
+- Azure bootstrap and SSH-first management guidance, Windows OpenSSH prerequisites, key/host-trust handling, private network rules, explicit fallback cases, and the separate HTTPS REST/Azure API paths.
 - This plan remains historical approval-gate documentation; update status only with explicit evidence and approval.
 
 Do not alter the existing installation guidance to suggest the connector is available before it exists and has been verified.
@@ -242,19 +279,19 @@ Do not alter the existing installation guidance to suggest the connector is avai
 
 After Gate A, pin Maester and VBR/API documentation/evidence; verify target build and schema for VMware, Hyper-V, and the representative job (Agent preferred); verify endpoint permissions by role and scope; verify API pagination, fields, enums, edition availability and restrictions. Establish the feature/license matrix, permission catalog, supported baseline, and accurate coverage contract. Resolve the representative-job topology and prove it can exercise the minimum shared core-check set. No live deployment until its separate preflight is approved.
 
-**Gate B evidence:** version-matched schema/permission/edition matrix, fixture contracts for VMware, Hyper-V, and the selected representative job, documented policy-to-evidence mappings, the minimum E2E control set, and a viable representative scenario (Agent preferred). Unverified fields/custom permissions/job capabilities remain explicit blockers or qualified limitations—not asserted facts.
+**Gate B evidence:** version-matched schema/permission/edition matrix, fixture contracts for VMware, Hyper-V, and the selected representative job, a common capability model with cross-family policy-to-evidence mappings, the minimum E2E control set, and a viable representative scenario (Agent preferred). Unverified fields/custom permissions/job capabilities remain explicit blockers or qualified limitations—not asserted facts.
 
 ### Phase C — offline foundation, controls, and docs
 
 Implement the connector, collection/normalization, inventory, result mapping, run-scoped cache, baseline/control catalog, and offline test layers as approved. Preserve direct native invocation as uncached. Build setup, permissions, baseline, testing and limitation docs from verified contracts. Run the native pack checks and all applicable offline tests against the pinned engine.
 
-**Gate C evidence:** clean offline validation; explicit six-outcome tests; no unexplained skipped/unknown coverage; cache contract/cleanup tests; read-only request boundary; no secrets in output; reviewable docs consistent with verified API/engine behavior.
+**Gate C evidence:** clean offline validation; explicit six-outcome and cross-family equivalence tests; no hypervisor gate on common checks; no unexplained skipped/unknown coverage; cache contract/cleanup tests; read-only request boundary; no secrets in output; reviewable docs consistent with verified API/engine behavior.
 
 ### Phase D — private Azure preflight and representative deployment E2E
 
 Only after separate budget, identity, network, media/license, privacy and cleanup approval: provision the minimal private environment, execute the approved representative job (Agent preferred), and collect a private native report. Verify the E2E's minimum core checks and role/visibility probes. Clean up and reconcile spend. Do not add a VMware live lab as a release requirement. Do not publish live evidence absent written consent.
 
-**Gate D evidence:** approved run manifest/budget; supported build/media verification; private networking and least-scope identities; janitor/cleanup proof; real authentication/API role probes; successful representative job/session/restore-point evidence; execution of the Gate B minimum core-control set; private native report with honest coverage; verified cleanup and cost reconciliation. A backup-only success with all core checks skipped fails this gate.
+**Gate D evidence:** approved run manifest/budget; supported build/media verification; private networking and least-scope identities; SSH-first management with verified host trust and Windows support where needed; janitor/cleanup proof independent of SSH availability; real authentication/API role probes; successful representative job/session/restore-point evidence; execution of the Gate B minimum core-control set through the common evaluator; private native report with honest coverage; verified cleanup and cost reconciliation. A backup-only success with all core checks skipped fails this gate.
 
 ### Phase E — release qualification
 
@@ -277,7 +314,7 @@ These are open prerequisites, not completed actions:
 5. Real endpoint-level permission probes for Operational Reader, Security Reader, administrator opt-in and candidate custom roles; confirm object visibility and 403 semantics.
 6. Human owner/approver for dedicated VBR service identity, MFA-off exception, expiry, network source restrictions, Key Vault access/rotation and revocation.
 7. Azure subscription/region/quota, explicit currency spend cap, current price/image/license/media/storage/network/egress estimates, and billing reconciliation owner.
-8. Approved private orchestration/controller and MI scopes, resource deployment/deletion permissions, Key Vault roles, Run Command/private-agent transport, private resource-group/output access, and independent janitor ownership.
+8. Approved private orchestration/controller and MI scopes, resource deployment/deletion permissions, Key Vault roles, private SSH connectivity, Windows OpenSSH/PowerShell support, key and host-trust bootstrap, bounded recovery fallback, private resource-group/output access, and independent janitor ownership.
 9. Private network path to VBR 9419; certificate/CA provisioning; approved egress, DNS, storage and telemetry/privacy policy.
 10. Free-edition/NFR eligibility, mandatory telemetry and terms acceptance, privacy review, and current Veeam terms/publication permission.
 11. Written consent before any public disclosure of live functionality, performance, capacity, or benchmark evidence; otherwise live output remains private.
@@ -328,7 +365,11 @@ Use version-matched documentation and the selected target's Swagger/API contract
 - [Key Vault RBAC guide](https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide)
 - [Virtual machine states and billing](https://learn.microsoft.com/en-us/azure/virtual-machines/states-billing)
 - [Create Azure cost budgets](https://learn.microsoft.com/en-us/azure/cost-management-billing/costs/tutorial-acm-create-budgets)
+- [Windows OpenSSH installation and first use](https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse) (validate against the selected Windows image before implementation)
+- [PowerShell remoting over SSH](https://learn.microsoft.com/en-us/powershell/scripting/security/remoting/ssh-remoting-in-powershell) (management transport, not VBR REST authentication)
 
 ## 15. Current activity record
 
-This documentation change records a proposed plan only. The conversational design passed an Opus focused recheck; the latest Azure deployment-only E2E correction is included here. Final document review returned PASS with clarifications incorporated: a representative Agent job is preferred rather than mandatory, Agent adapter scope is minimal, and E2E must execute a defined core-control set. Documentation-only checks passed for changed-path scope, relative links, balanced code fences, final newlines, required decision/approval text, and Git whitespace validation. No implementation, provisioning, product tests, build, live API probe, cost validation, or user approval is claimed. Publication must be followed by explicit user approval of the committed and pushed plan before implementation.
+The original proposed plan was committed and pushed as `f433d65`, following an Opus PASS and documentation-only checks for changed-path scope, relative links, balanced code fences, final newlines, required decision/approval text, and Git whitespace validation. Those original checks do not establish validation of later revisions.
+
+On 2026-11-26, the clarification of generic capability-based API processing, equal common-capability scope across Agent/VMware/Hyper-V, and SSH-first Azure guest management received an Opus PASS with wording clarifications incorporated. Documentation-only checks passed for the single-file staged scope, relative links, balanced fences/final newline, clarification and approval clauses, and Git whitespace validation. No implementation, provisioning, product tests, build, live API probe, cost validation, or user approval is claimed. The revised plan must be committed, pushed, and explicitly approved by the user before implementation.
