@@ -1,0 +1,28 @@
+{
+  "ApiRevision":"1.3-rev2",
+  "VerificationStatus":"PublicSwaggerVerified; target edition, object visibility and live RBAC pending",
+  "CustomPermissionIds":[],
+  "Profiles":{
+    "OperationalReader":{"RecommendedDocumentedRole":"Backup Viewer","LiveVerified":false,"AdministratorOptIn":false},
+    "ComprehensiveAdministrator":{"RecommendedDocumentedRole":"Backup Administrator","LiveVerified":false,"AdministratorOptIn":true}
+  },
+  "Tests":[
+    {"TestId":"MP.VBR.1001","Category":"Implementation","Workloads":["Server"],"Operations":["GetServerInfo"],"Scope":"Configured VBR origin; installation ID/build","Profile":"ComprehensiveAdministrator"},
+    {"TestId":"MP.VBR.1002","Category":"Implementation","Workloads":["Common"],"Operations":["GetAllRepositoriesStates"],"Scope":"Explicit ExpectedRepositoryIds","Profile":"OperationalReader"},
+    {"TestId":"MP.VBR.2001","Category":"Configuration","Workloads":["Server"],"Operations":["GetConfigBackupOptions"],"Scope":"Server configuration backup","Profile":"ComprehensiveAdministrator"},
+    {"TestId":"MP.VBR.2002","Category":"Configuration","Workloads":["Server"],"Operations":["GetConfigBackupOptions"],"Scope":"Server configuration backup","Profile":"ComprehensiveAdministrator"},
+    {"TestId":"MP.VBR.2003","Category":"Configuration","Workloads":["Server"],"Operations":["GetConfigBackupOptions"],"Scope":"Server configuration backup","Profile":"ComprehensiveAdministrator"},
+    {"TestId":"MP.VBR.2010","Category":"Configuration","Workloads":["Agent","VMware","HyperV"],"Operations":["GetAllJobs","GetJob"],"Scope":"Explicit ExpectedJobIds; typed day-based retention","Profile":"OperationalReader"},
+    {"TestId":"MP.VBR.2011","Category":"Configuration","Workloads":["Agent","VMware","HyperV"],"Operations":["GetAllJobs","GetJob"],"Scope":"Explicit ExpectedJobIds; typed point-count retention","Profile":"OperationalReader"},
+    {"TestId":"MP.VBR.2012","Category":"Configuration","Workloads":["Agent","VMware","HyperV"],"Operations":["GetAllJobs","GetJob"],"Scope":"Explicit ExpectedJobIds; approved daily job scope","Profile":"OperationalReader"},
+    {"TestId":"MP.VBR.2013","Category":"Configuration","Workloads":["Agent","VMware","HyperV"],"Operations":["GetAllJobs","GetJob"],"Scope":"Explicit ExpectedJobIds; health-check enablement only","Profile":"OperationalReader"},
+    {"TestId":"MP.VBR.3001","Category":"Operations","Workloads":["Agent","VMware","HyperV"],"Operations":["GetAllJobs","GetJob","GetAllBackups","GetBackupObjectRestorePointsWithFiltering"],"Scope":"Explicit ExpectedJobIds and ExpectedProtectedObjectIds; object-scoped points correlated through backupId/jobId","Profile":"OperationalReader"},
+    {"TestId":"MP.VBR.3002","Category":"Operations","Workloads":["Agent","VMware","HyperV"],"Operations":["GetAllJobs","GetJob","GetAllSessions"],"Scope":"Explicit ExpectedJobIds; latest unambiguous backup session/retry chain","Profile":"OperationalReader"},
+    {"TestId":"MP.VBR.3003","Category":"Operations","Workloads":["Agent","VMware","HyperV"],"Operations":["GetAllJobs","GetJob","GetAllSessions"],"Scope":"Explicit ExpectedJobIds; running backup sessions","Profile":"OperationalReader"},
+    {"TestId":"MP.VBR.3004","Category":"Operations","Workloads":["Common"],"Operations":["GetAllRepositoriesStates"],"Scope":"Explicit ExpectedRepositoryIds; meaningful API capacity","Profile":"OperationalReader"},
+    {"TestId":"MP.VBR.3005","Category":"Operations","Workloads":["Server"],"Operations":["GetConfigBackupOptions"],"Scope":"Last successful configuration backup timestamp","Profile":"ComprehensiveAdministrator"},
+    {"TestId":"MP.VBR.4001","Category":"Security","Workloads":["Server"],"Operations":["GetConfigBackupOptions"],"Scope":"Configuration backup encryption setting","Profile":"ComprehensiveAdministrator"},
+    {"TestId":"MP.VBR.4010","Category":"Security","Workloads":["Agent","VMware","HyperV"],"Operations":["GetAllJobs","GetJob"],"Scope":"Explicit ExpectedJobIds; current job encryption setting","Profile":"OperationalReader"},
+    {"TestId":"MP.VBR.4011","Category":"Security","Workloads":["Agent","VMware","HyperV"],"Operations":["GetAllJobs","GetJob"],"Scope":"Explicit ExpectedJobIds and ClassifiedApplicationJobIds","Profile":"OperationalReader"}
+  ]
+}

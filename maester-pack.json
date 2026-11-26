@@ -14,8 +14,36 @@
   "Suites": [
     "tests"
   ],
+  "Helpers": ["helpers"],
+  "Connectors": [{
+    "Service": "VBR.RestApi",
+    "DisplayName": "Veeam Backup & Replication REST API",
+    "File": "connectors/Vbr.ps1",
+    "Connect": "Connect-VbrRest",
+    "Test": "Test-VbrRest",
+    "Renew": "Update-VbrConnection",
+    "Describe": "Get-VbrConnectionDescription",
+    "Disconnect": "Disconnect-VbrRest"
+  }],
+  "Settings": {
+    "VBR.Server": {"Type":"string","Default":"","Description":"Approved HTTPS VBR origin, normally https://vbr.example.net:9419. No path or credentials."},
+    "VBR.MinimumServerBuild": {"Type":"string","Default":"13.1.2.57","Description":"Dated minimum approved four-part build; revalidate vendor recommendations."},
+    "VBR.ExpectedJobIds": {"Type":"string[]","Default":[],"Description":"Explicit expected job UUIDs. Empty means unknown coverage, not compliance."},
+    "VBR.ExpectedRepositoryIds": {"Type":"string[]","Default":[],"Description":"Explicit expected repository UUIDs."},
+    "VBR.ExpectedProtectedObjectIds": {"Type":"string[]","Default":[],"Description":"Explicit expected backup-object UUIDs for restore-point freshness."},
+    "VBR.ClassifiedApplicationJobIds": {"Type":"string[]","Default":[],"Description":"Explicit application-bearing job UUIDs. Missing classification is Investigate."},
+    "VBR.MinimumConfigurationBackupRestorePoints": {"Type":"int","Default":14},
+    "VBR.MinimumRetentionDays": {"Type":"int","Default":14},
+    "VBR.MinimumRestorePoints": {"Type":"int","Default":14},
+    "VBR.MaximumRestorePointAgeHours": {"Type":"int","Default":26},
+    "VBR.MaximumConfigurationBackupAgeHours": {"Type":"int","Default":48},
+    "VBR.MaximumRunningSessionHours": {"Type":"int","Default":12},
+    "VBR.MinimumFreeSpacePercent": {"Type":"int","Default":15},
+    "VBR.MinimumFreeSpaceGB": {"Type":"int","Default":20},
+    "VBR.WarningHandling": {"Type":"string","Default":"Investigate","AllowedValues":["Investigate","Fail"]}
+  },
   "Uses": {
-    "Services": [],
+    "Services": ["VBR.RestApi"],
     "GraphScopes": [],
     "Network": []
   },

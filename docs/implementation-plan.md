@@ -1,6 +1,6 @@
 # VBR assessment pack implementation plan
 
-**Status: PROPOSED — awaiting user approval.** This document is a plan, not an implementation report. The plan must be committed and pushed, then explicitly approved by the user before implementation begins. Publication and technical review do not satisfy that approval gate. No implementation, provisioning, or tests are authorized by this plan alone.
+**Status: APPROVED for offline implementation.** On 2026-11-26 the user explicitly approved and authorized the build of published revision `3a1bc37`. The next explicit approval is required **before provisioning any Azure resources**. No cloud spend, account configuration, live deployment, or production mutation is authorized by this implementation approval.
 
 ## 1. Purpose and scope
 
@@ -14,7 +14,7 @@ Hypervisor support is not a prerequisite of the actual Veeam posture checks. Age
 
 VMware and Hyper-V adapters, like the Agent adapter, are limited in v0.1 to mapping the common protection model. Hypervisor-only product features are outside v0.1 unless separately approved and are recorded as scope limitations; their presence does not require broader checks than the Agent scenario.
 
-This plan does not authorize changes to business logic, account configuration, Azure resources, or any other implementation. It does not authorize a spend, elevated access, production changes, or destructive testing. Those require separate approval and preflight. The current repository is a scaffold: preserve its package identity and do not claim that planned functionality is already present.
+The user's subsequent approval authorizes offline code, tests, and documentation within this project. It does not authorize spend, Azure provisioning, elevated access, account configuration, production changes, or destructive live testing. Those require separate approval and preflight. Preserve package identity and report implemented and validated functionality separately from planned functionality.
 
 ## 2. Repository invariants and current state
 
@@ -290,7 +290,7 @@ Do not alter the existing installation guidance to suggest the connector is avai
 
 ## 12. Phased implementation and acceptance gates
 
-### Phase A — plan publication and explicit approval (current)
+### Phase A — plan publication and explicit approval (completed)
 
 1. Review this document, publish it through the authorized documentation-only commit/push workflow, and obtain explicit user approval of the committed/pushed plan.
 2. Until that approval is received, do not implement code, tests, IaC, scripts, account setup, live tests, or Azure provisioning. The parent may independently review the exact final document and verify changed paths; that is not user approval.
@@ -303,6 +303,8 @@ Do not alter the existing installation guidance to suggest the connector is avai
 After Gate A, pin Maester and VBR/API documentation/evidence; verify target build and schema for VMware, Hyper-V, and the representative job (Agent preferred); verify endpoint permissions by role and scope; verify API pagination, fields, enums, edition availability and restrictions. Establish the feature/license matrix, permission catalog, supported baseline, and accurate coverage contract. Resolve the representative-job topology and prove it can exercise the minimum shared core-check set. No live deployment until its separate preflight is approved.
 
 **Gate B evidence:** version-matched schema/permission/edition matrix, validated declarative endpoint and adapter-extension contracts, fixture contracts for VMware, Hyper-V, and the selected representative job, a common capability model with cross-family policy-to-evidence mappings, the minimum E2E control set, and a viable representative scenario (Agent preferred). Unverified fields/custom permissions/job capabilities remain explicit blockers or qualified limitations—not asserted facts.
+
+Implementation sequencing note: documentary/public-schema verification and offline foundation work may proceed under the user's build authorization. Target-installed Swagger, actual edition availability, and live permission/visibility probes cannot be completed before the separately approved lab exists. Track Gate B as partial until those deferred checks are complete; do not represent an offline fixture or public schema as target-build or live verification, and do not claim final Gate B/C/D acceptance from partial evidence.
 
 ### Phase C — offline foundation, controls, and docs
 
@@ -397,4 +399,6 @@ The original proposed plan was committed and pushed as `f433d65`, following an O
 
 On 2026-11-26, the clarification of generic capability-based API processing, equal common-capability scope across Agent/VMware/Hyper-V, and SSH-first Azure guest management was committed and pushed as `9601d6f`, following an Opus PASS with wording clarifications incorporated. Documentation-only checks passed for that revision's single-file staged scope, relative links, balanced fences/final newline, clarification and approval clauses, and Git whitespace validation.
 
-The subsequent endpoint-extension clarification received a separate Opus PASS. It requires declarative endpoint/adapter extensions without shared REST-handler changes, with explicit registration, path safety, cache identity, and offline acceptance contracts. Documentation-only checks passed for its single-file staged scope, local links, fences/final newline, extension/security clauses, approval gate, and Git whitespace validation. No implementation, provisioning, product tests, build, live API probe, cost validation, or user approval is claimed. The latest revised plan must be committed, pushed, and explicitly approved by the user before implementation.
+The subsequent endpoint-extension clarification received a separate Opus PASS and was published as `3a1bc37`. It requires declarative endpoint/adapter extensions without shared REST-handler changes, with explicit registration, path safety, cache identity, and offline acceptance contracts. At publication, documentation-only checks passed and implementation remained blocked pending explicit approval.
+
+On 2026-11-26 the user explicitly reviewed, approved and authorized the build of that plan, requiring the next approval before Azure provisioning. The first offline milestone subsequently produced 17 native controls, endpoint/request/response adapter contracts, connector/cache foundation, permission documentation and pinned validation. The latest combined local run passed native pack validation, 27 Pester tests, native six-outcome/configuration/cache checks. Opus returned PASS for this milestone only. No live VBR validation, Azure provisioning, cost qualification or full Gate B/C/D acceptance is claimed. See [build report](build-report.md) and [remaining work](implementation-status.md).

@@ -1,18 +1,9 @@
 function Test-Vbr1001 {
-    <#
-    .SYNOPSIS
-    The first test of the pack
-    #>
-    [MaesterTest(
-        Id       = 'MP.VBR.1001',
-        Title    = 'The first test of the pack',
-        Severity = 'Medium'
-    )]
+    [MaesterTest(Id = 'MP.VBR.1001', Title = 'VBR build meets the approved minimum', Severity = 'High', Service = 'VBR.RestApi')]
     [CmdletBinding()]
-    [OutputType([bool])]
-    param()
-
-    # Read the setting this test checks, then return $true when it passes and $false when it fails.
-    Add-MtTestResultDetail -Investigate -Result 'This test is not written yet.'
-    $null
+    param(
+        [MaesterParameter(Setting = 'VBR.MinimumServerBuild')]
+        [ValidatePattern('^\d+\.\d+\.\d+\.\d+$')][string]$MinimumServerBuild = '13.1.2.57'
+    )
+    Invoke-VbrNativeControl '1001' @{ MinimumVersion = [version]$MinimumServerBuild }
 }

@@ -1,4 +1,4 @@
-# Checks the pack the way Maester does when someone installs it. Written by the pack builder on packs.maester.cloud.
+# Public CI is synthetic/offline only. Never attach live credentials or Azure identities.
 name: Test pack
 on:
   push:
@@ -10,11 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test-MtPack
+      - name: Offline pack and native contracts
         shell: pwsh
         run: |
-          Install-Module Maester -Scope CurrentUser -Force -AllowPrerelease
-          Import-Module Maester
-          $result = Test-MtPack -Path .
-          $result | Format-List | Out-String | Write-Host
-          if (-not $result.IsValid) { throw 'Test-MtPack found problems. Fix them before you release the pack.' }
+          $ErrorActionPreference = 'Stop'
+          . ./qa/Initialize-Tools.ps1
+          Initialize-VbrOfflineTools
+          . ./qa/Invoke-Offline.ps1
+          . ./qa/Native.ps1
+          $result = Invoke-VbrOfflineValidation
+          Invoke-VbrNativeValidation -Bundle $result.Bundle

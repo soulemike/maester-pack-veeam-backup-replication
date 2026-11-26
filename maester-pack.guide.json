@@ -1,3 +1,20 @@
 {
-  "$schema": "https://maester.dev/schemas/maester-pack-guide-1.0.json"
+  "$schema": "https://maester.dev/schemas/maester-pack-guide-1.0.json",
+  "Summary": "Offline implementation milestone for VBR 13.1 / REST 1.3-rev2 posture assessment. Seventeen common-capability controls are authored; live qualification and further planned controls remain pending.",
+  "Prerequisites": [
+    {"Text":"Use Maester 3.0 (offline validation pins 3.0.0-rc83), PowerShell 7.4+, an approved HTTPS VBR origin, trusted certificate chain, and explicitly declared expected inventory."},
+    {"Text":"No Azure provisioning is authorized until the next explicit approval. Read setup and limitations before installing this unfinished milestone.","Url":"https://github.com/soulemike/maester-pack-veeam-backup-replication/blob/main/docs/implementation-status.md"}
+  ],
+  "Connect": {
+    "Steps":[{"Text":"Configure VBR.Server in GlobalSettings and connect the dedicated VBR REST account.","Command":"Connect-Maester -Service VBR.RestApi"}],
+    "Notes":["OperationalReader is the default pack profile; documented Backup Viewer access still needs live visibility verification.","Administrator-only reads require explicit administrator opt-in. REST MFA may need disabling for this dedicated service account only, never all humans. Do not store credentials in configuration."],
+    "More":"https://github.com/soulemike/maester-pack-veeam-backup-replication/blob/main/docs/setup.md"
+  },
+  "Run": {
+    "Commands":[{"Text":"Run only VBR tests. Direct native invocation is safe and uncached.","Command":"Invoke-Maester -Pack VBR -SkipBuiltIn"}],
+    "Notes":["Empty expected inventory, missing evidence, or unsupported schemas do not imply compliance. Agent/VMware/Hyper-V share common policy semantics; no hypervisor connection is required.","Native configuration/runtime parameters expose approved overrides. Scoped caching uses the separately dot-sourced public assessment wrapper; see API-client documentation."],
+    "More":"https://github.com/soulemike/maester-pack-veeam-backup-replication/blob/main/docs/baseline.md"
+  },
+  "AppOnly":{"Supported":false,"Text":"VBR uses its own password/refresh OAuth lifecycle. Microsoft Graph application credentials and Azure managed identity do not authenticate to VBR. Managed identity is reserved for separately approved Azure operations."},
+  "Support":{"Pack":"https://github.com/soulemike/maester-pack-veeam-backup-replication/issues"}
 }
